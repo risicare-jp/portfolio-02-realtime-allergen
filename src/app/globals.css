@@ -13,6 +13,14 @@
   --color-gold-soft: #f4ecd9;
   --color-gold-deep: #6f5828;
 
+  /* Verdict palette — earth tones harmonised with Variant D */
+  --color-safe-bg: #eae2ce;
+  --color-safe-text: #3d4a2a;
+  --color-trace-bg: #f4e5bf;
+  --color-trace-text: #6f4a12;
+  --color-contains-bg: #efd4bb;
+  --color-contains-text: #702817;
+
   --font-sans: var(--font-geist-sans), "Inter", system-ui, -apple-system,
     BlinkMacSystemFont, sans-serif;
   --font-serif: "Noto Serif JP", "Fraunces", Georgia, "Yu Mincho",

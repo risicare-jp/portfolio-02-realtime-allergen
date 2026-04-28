@@ -89,7 +89,7 @@ const DIRECTIONS: Direction[] = [
     id: "D",
     name: "金茶 落ち着き",
     tagline: "Warm Gold Tranquil (bg = A クリーム)",
-    vibe: "金継ぎの金茶アクセント × クリーム背景。判定セルは emerald/amber/rose-50 系（実装と一致）",
+    vibe: "金継ぎの金茶アクセント × クリーム背景。判定セルもクリーム系の earth tone で統一",
     bg: "#FAF7F0",
     surface: "#FFFFFF",
     text: "#3A2E1A",
@@ -101,10 +101,10 @@ const DIRECTIONS: Direction[] = [
       "'Noto Serif JP', 'Fraunces', Georgia, 'Yu Mincho', serif",
     headingWeight: 700,
     bodyFont: "'Inter', system-ui, sans-serif",
-    cellSafe: { bg: "#ECFDF5", text: "#065F46" },
-    cellTrace: { bg: "#FFFBEB", text: "#92400E" },
-    cellContains: { bg: "#FFF1F2", text: "#9F1239" },
-    borderLeftContains: "#E11D48",
+    cellSafe: { bg: "#EAE2CE", text: "#3D4A2A" },
+    cellTrace: { bg: "#F4E5BF", text: "#6F4A12" },
+    cellContains: { bg: "#EFD4BB", text: "#702817" },
+    borderLeftContains: "#702817",
   },
 ];
 

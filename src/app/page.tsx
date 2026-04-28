@@ -78,27 +78,27 @@ const MENU_BY_CATEGORY: Partial<Record<Category, MenuItem[]>> = (() => {
   return groups;
 })();
 
-// Hero (single-result) verdict styling — strong, audit-ready presence
+// Hero (single-result) verdict styling — earth-tone palette aligned with Variant D
 const VERDICT_HERO: Record<
   string,
   { bg: string; text: string; ring: string; label: string }
 > = {
   "○": {
-    bg: "bg-emerald-50",
-    text: "text-emerald-900",
-    ring: "ring-emerald-400",
+    bg: "bg-safe-bg",
+    text: "text-safe-text",
+    ring: "ring-safe-text/30",
     label: "SAFE",
   },
   "△": {
-    bg: "bg-amber-50",
-    text: "text-amber-900",
-    ring: "ring-amber-400",
+    bg: "bg-trace-bg",
+    text: "text-trace-text",
+    ring: "ring-trace-text/30",
     label: "TRACE / CROSS-CONTAMINATION",
   },
   "×": {
-    bg: "bg-rose-50",
-    text: "text-rose-900",
-    ring: "ring-rose-400",
+    bg: "bg-contains-bg",
+    text: "text-contains-text",
+    ring: "ring-contains-text/30",
     label: "CONTAINS",
   },
   "?": {
@@ -111,23 +111,23 @@ const VERDICT_HERO: Record<
 
 // Per-cell + per-card colours for the multi-order results
 const ORDER_CELL_BG: Record<string, string> = {
-  "○": "bg-emerald-50",
-  "△": "bg-amber-50",
-  "×": "bg-rose-50",
+  "○": "bg-safe-bg",
+  "△": "bg-trace-bg",
+  "×": "bg-contains-bg",
   "?": "bg-cream-soft",
 };
 
 const ORDER_VERDICT_COLOR: Record<string, string> = {
-  "○": "text-emerald-700",
-  "△": "text-amber-700",
-  "×": "text-rose-700",
+  "○": "text-safe-text",
+  "△": "text-trace-text",
+  "×": "text-contains-text",
   "?": "text-ink-soft",
 };
 
 const ORDER_BORDER_COLOR: Record<string, string> = {
-  "○": "border-l-emerald-500",
-  "△": "border-l-amber-500",
-  "×": "border-l-rose-600",
+  "○": "border-l-safe-text",
+  "△": "border-l-trace-text",
+  "×": "border-l-contains-text",
   "?": "border-l-line",
 };
 
@@ -556,7 +556,7 @@ export default function Home() {
               {/* Summary */}
               <div className="grid grid-cols-3 gap-3 rounded-2xl border border-line bg-cream-soft/60 p-5 text-center">
                 <div>
-                  <div className="text-3xl font-bold text-emerald-700">
+                  <div className="text-3xl font-bold text-safe-text">
                     {orderResult.summary.safeCount}
                   </div>
                   <div className="mt-1 text-[10px] font-bold uppercase tracking-[2px] text-ink-soft">
@@ -564,7 +564,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-amber-700">
+                  <div className="text-3xl font-bold text-trace-text">
                     {orderResult.summary.traceCount}
                   </div>
                   <div className="mt-1 text-[10px] font-bold uppercase tracking-[2px] text-ink-soft">
@@ -572,7 +572,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-rose-700">
+                  <div className="text-3xl font-bold text-contains-text">
                     {orderResult.summary.containsCount}
                   </div>
                   <div className="mt-1 text-[10px] font-bold uppercase tracking-[2px] text-ink-soft">
@@ -689,10 +689,10 @@ export default function Home() {
                             : "○";
                       const color =
                         level === "yes"
-                          ? "text-rose-600"
+                          ? "text-contains-text"
                           : level === "trace"
-                            ? "text-amber-600"
-                            : "text-emerald-600";
+                            ? "text-trace-text"
+                            : "text-safe-text";
                       return (
                         <td
                           key={k}
