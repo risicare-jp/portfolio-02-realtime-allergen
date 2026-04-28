@@ -40,15 +40,20 @@ const INTENT_SCHEMA = {
       enum: [...ALLERGEN_KEYS, "unknown"],
     },
     itemQuery: {
-      type: ["string", "null"],
+      anyOf: [{ type: "string" }, { type: "null" }],
     },
     scope: {
       type: "string",
       enum: ["specific_item", "menu_wide", "category"],
     },
     category: {
-      type: ["string", "null"],
-      enum: ["appetizer", "main", "side", "dessert", "drink", null],
+      anyOf: [
+        {
+          type: "string",
+          enum: ["appetizer", "main", "side", "dessert", "drink"],
+        },
+        { type: "null" },
+      ],
     },
     confidence: {
       type: "string",

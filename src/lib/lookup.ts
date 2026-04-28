@@ -152,7 +152,7 @@ export function lookupVerdict(
   const scopeLabelEn =
     intent.scope === "category" && intent.category
       ? `${intent.category} items`
-      : "the menu";
+      : "items on the menu";
   const reasoningEn =
     contains.length > 0
       ? `${contains.length} ${scopeLabelEn} contain ${allergenEn}: ${contains
