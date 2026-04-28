@@ -78,6 +78,30 @@ const VERDICT_STYLE: Record<
   },
 };
 
+// Multi-order section: each cell carries its own color so a △ row inside a
+// card with an × never reads as "cannot serve". The card itself stays neutral
+// (white) and uses only a colored left border to flag the worst case.
+const ORDER_CELL_BG: Record<string, string> = {
+  "○": "bg-emerald-50",
+  "△": "bg-amber-50",
+  "×": "bg-rose-50",
+  "?": "bg-slate-50",
+};
+
+const ORDER_VERDICT_COLOR: Record<string, string> = {
+  "○": "text-emerald-700",
+  "△": "text-amber-700",
+  "×": "text-rose-700",
+  "?": "text-slate-600",
+};
+
+const ORDER_BORDER_COLOR: Record<string, string> = {
+  "○": "border-l-emerald-500",
+  "△": "border-l-amber-500",
+  "×": "border-l-rose-600",
+  "?": "border-l-slate-300",
+};
+
 export default function Home() {
   const [transcript, setTranscript] = useState("");
   const [listening, setListening] = useState(false);
@@ -448,23 +472,24 @@ export default function Home() {
               </div>
 
               {orderResult.items.map(({ item, cells, worstVerdict }) => {
-                const style = VERDICT_STYLE[worstVerdict];
+                const worstLabel = VERDICT_STYLE[worstVerdict].label;
                 return (
                   <div
                     key={item.id}
-                    className={`rounded-lg border-l-4 p-4 ${style.bg} ${style.text}`}
-                    style={{ borderLeftColor: "currentColor" }}
+                    className={`rounded-lg border-l-4 bg-white p-4 shadow-sm ${ORDER_BORDER_COLOR[worstVerdict]}`}
                   >
-                    <div className="mb-3 flex items-center justify-between">
-                      <h3 className="font-semibold">
+                    <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2">
+                      <h3 className="font-semibold text-slate-900">
                         {item.name.en}
-                        <span className="ml-2 text-sm opacity-70">
+                        <span className="ml-2 text-sm font-normal text-slate-500">
                           / {item.name.ja}
                         </span>
                       </h3>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">
-                          {style.label}
+                      <div
+                        className={`flex items-center gap-2 ${ORDER_VERDICT_COLOR[worstVerdict]}`}
+                      >
+                        <span className="text-[10px] font-bold uppercase tracking-wider">
+                          {worstLabel}
                         </span>
                         <span className="text-3xl font-bold leading-none">
                           {worstVerdict}
@@ -475,23 +500,25 @@ export default function Home() {
                       {cells.map((c) => (
                         <div
                           key={c.allergen}
-                          className="rounded bg-white/60 p-2 text-sm"
+                          className={`rounded p-2 text-sm ${ORDER_CELL_BG[c.verdict]}`}
                         >
                           <div className="flex items-center gap-2">
-                            <span className="inline-block w-5 text-center text-lg font-bold">
+                            <span
+                              className={`inline-block w-5 text-center text-lg font-bold ${ORDER_VERDICT_COLOR[c.verdict]}`}
+                            >
                               {c.verdict}
                             </span>
-                            <span className="font-medium capitalize">
+                            <span className="font-medium capitalize text-slate-900">
                               {ALLERGEN_LABEL[c.allergen].en}
                             </span>
-                            <span className="text-xs opacity-60">
+                            <span className="text-xs text-slate-500">
                               / {ALLERGEN_LABEL[c.allergen].ja}
                             </span>
                           </div>
                           {c.note && (
-                            <div className="mt-1 ml-7 space-y-0.5 text-xs">
+                            <div className="mt-1 ml-7 space-y-0.5 text-xs text-slate-700">
                               <p>{c.note.en}</p>
-                              <p className="opacity-70">{c.note.ja}</p>
+                              <p className="text-slate-500">{c.note.ja}</p>
                             </div>
                           )}
                         </div>
