@@ -1,0 +1,90 @@
+import type { MenuItem } from "@/lib/types";
+
+export const SAMPLE_MENU: MenuItem[] = [
+  {
+    id: "salmon-teriyaki",
+    name: { en: "Salmon Teriyaki", ja: "サーモン照り焼き" },
+    category: "main",
+    contains: { wheat: "yes", soy: "yes", fish: "yes", sesame: "trace" },
+    notes: { en: "Teriyaki sauce contains wheat-based shoyu." },
+  },
+  {
+    id: "chicken-karaage",
+    name: { en: "Chicken Karaage", ja: "鶏の唐揚げ" },
+    category: "main",
+    contains: { wheat: "yes", egg: "yes", soy: "yes" },
+    notes: { en: "Marinated in shoyu; coated in wheat flour and potato starch." },
+  },
+  {
+    id: "ebi-tempura",
+    name: { en: "Ebi Tempura", ja: "海老天ぷら" },
+    category: "appetizer",
+    contains: { wheat: "yes", egg: "trace", shellfish: "yes" },
+    notes: { en: "Shrimp dish — definite shellfish exposure." },
+  },
+  {
+    id: "vegetable-tempura",
+    name: { en: "Vegetable Tempura", ja: "野菜天ぷら" },
+    category: "appetizer",
+    contains: { wheat: "yes", egg: "trace", shellfish: "trace" },
+    notes: {
+      en: "Fried in shared oil with shrimp tempura — cross-contamination risk for shellfish.",
+    },
+  },
+  {
+    id: "miso-soup",
+    name: { en: "Miso Soup", ja: "味噌汁" },
+    category: "side",
+    contains: { soy: "yes", fish: "yes" },
+    notes: { en: "Dashi base contains bonito (fish)." },
+  },
+  {
+    id: "edamame",
+    name: { en: "Edamame", ja: "枝豆" },
+    category: "appetizer",
+    contains: { soy: "yes" },
+    notes: { en: "Lightly salted boiled soybeans." },
+  },
+  {
+    id: "tonkotsu-ramen",
+    name: { en: "Tonkotsu Ramen", ja: "豚骨ラーメン" },
+    category: "main",
+    contains: { wheat: "yes", egg: "yes", soy: "yes", sesame: "trace" },
+    notes: { en: "Wheat noodles, soft-boiled egg, soy-based tare." },
+  },
+  {
+    id: "kake-udon",
+    name: { en: "Kake Udon", ja: "かけうどん" },
+    category: "main",
+    contains: { wheat: "yes", soy: "yes", fish: "yes" },
+    notes: { en: "Wheat udon noodles in dashi-based broth." },
+  },
+  {
+    id: "salmon-nigiri",
+    name: { en: "Salmon Nigiri", ja: "サーモン握り" },
+    category: "main",
+    contains: { fish: "yes", soy: "trace" },
+    notes: { en: "Served with optional shoyu (soy sauce)." },
+  },
+  {
+    id: "california-roll",
+    name: { en: "California Roll", ja: "カリフォルニアロール" },
+    category: "main",
+    contains: { egg: "yes", shellfish: "yes", sesame: "yes", soy: "trace" },
+    notes: { en: "Contains imitation crab (shellfish) and Japanese mayo (egg)." },
+  },
+  {
+    id: "matcha-ice-cream",
+    name: { en: "Matcha Ice Cream", ja: "抹茶アイスクリーム" },
+    category: "dessert",
+    contains: { milk: "yes", egg: "yes" },
+    notes: { en: "Contains dairy and egg yolks." },
+  },
+  {
+    id: "mochi",
+    name: { en: "Mochi", ja: "餅" },
+    category: "dessert",
+    contains: {},
+    notes: { en: "Plain rice mochi — no major allergens." },
+  },
+];
