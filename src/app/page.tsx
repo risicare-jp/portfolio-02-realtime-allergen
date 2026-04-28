@@ -266,10 +266,17 @@ export default function Home() {
                 <p className="text-base leading-relaxed opacity-80">
                   {result.reasoning.ja}
                 </p>
-                {result.matchedItem?.notes?.en && (
-                  <p className="mt-2 rounded-md bg-white/50 p-2 text-sm italic">
-                    Note: {result.matchedItem.notes.en}
-                  </p>
+                {result.note && (
+                  <div className="mt-3 space-y-1 rounded-md bg-white/60 p-3 text-sm">
+                    <p>
+                      <span className="font-semibold">Why:</span>{" "}
+                      {result.note.en}
+                    </p>
+                    <p className="opacity-80">
+                      <span className="font-semibold">理由:</span>{" "}
+                      {result.note.ja}
+                    </p>
+                  </div>
                 )}
               </div>
             </div>

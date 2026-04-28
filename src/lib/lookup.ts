@@ -86,6 +86,7 @@ export function lookupVerdict(
         en: "I couldn't identify which allergen you're asking about. Try asking, e.g., 'does the salmon teriyaki have shellfish?'",
         ja: "どのアレルゲンを尋ねているか特定できませんでした。「サーモン照り焼きにエビは入ってる？」のように聞いてください。",
       },
+      note: null,
       rawTranscript,
     };
   }
@@ -105,6 +106,7 @@ export function lookupVerdict(
           en: `"${intent.itemQuery}" is not on the menu I know. Please verify with the kitchen.`,
           ja: `「${intent.itemQuery}」はこのメニューにありません。厨房に確認してください。`,
         },
+        note: null,
         rawTranscript,
       };
     }
@@ -122,11 +124,18 @@ export function lookupVerdict(
         : verdict === "△"
           ? `${matched.name.ja}は${allergenJa}の混入の可能性があります（交差汚染リスク）。`
           : `${matched.name.ja}に${allergenJa}は含まれません。`;
+    // Surface the per-allergen note only for × and △ — for ○ the note is
+    // either irrelevant or not present, and surfacing it is noise.
+    const note =
+      verdict === "×" || verdict === "△"
+        ? (matched.notes?.[allergen] ?? null)
+        : null;
     return {
       verdict,
       matchedItem: matched,
       intent,
       reasoning: { en: reasoningEn, ja: reasoningJa },
+      note,
       rawTranscript,
     };
   }
@@ -179,6 +188,9 @@ export function lookupVerdict(
     matchedItem: contains[0] ?? trace[0] ?? null,
     intent,
     reasoning: { en: reasoningEn, ja: reasoningJa },
+    // Aggregate (menu-wide / category) queries don't surface a single note —
+    // the reasoning already lists the affected items by name.
+    note: null,
     rawTranscript,
   };
 }
