@@ -6,8 +6,10 @@ import { checkOrder } from "@/lib/lookup";
 import {
   ALLERGEN_KEYS,
   type AllergenKey,
+  type MenuItem,
   type OrderCheckResult,
   type QueryResult,
+  type Verdict,
 } from "@/lib/types";
 
 type SpeechRecognitionLike = {
@@ -37,18 +39,47 @@ interface SpeechRecognitionErrorEvent {
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
 
 const ALLERGEN_LABEL: Record<AllergenKey, { en: string; ja: string }> = {
-  wheat: { en: "wheat", ja: "小麦" },
-  egg: { en: "egg", ja: "卵" },
-  milk: { en: "milk", ja: "乳" },
-  soy: { en: "soy", ja: "大豆" },
-  peanut: { en: "peanut", ja: "ピーナッツ" },
-  treenut: { en: "tree nut", ja: "ナッツ" },
-  fish: { en: "fish", ja: "魚" },
-  shellfish: { en: "shellfish", ja: "甲殻類" },
-  sesame: { en: "sesame", ja: "ごま" },
+  wheat: { en: "Wheat", ja: "小麦" },
+  egg: { en: "Egg", ja: "卵" },
+  milk: { en: "Milk", ja: "乳" },
+  soy: { en: "Soy", ja: "大豆" },
+  peanut: { en: "Peanut", ja: "ピーナッツ" },
+  treenut: { en: "Tree nut", ja: "ナッツ" },
+  fish: { en: "Fish", ja: "魚" },
+  shellfish: { en: "Shellfish", ja: "甲殻類" },
+  sesame: { en: "Sesame", ja: "ごま" },
 };
 
-const VERDICT_STYLE: Record<
+type Category = MenuItem["category"];
+
+const CATEGORY_LABEL: Record<Category, { en: string; ja: string }> = {
+  appetizer: { en: "Appetizer", ja: "前菜" },
+  main: { en: "Main", ja: "主菜" },
+  side: { en: "Side", ja: "副菜" },
+  dessert: { en: "Dessert", ja: "甘味" },
+  drink: { en: "Drink", ja: "飲物" },
+};
+
+const CATEGORY_ORDER: Category[] = [
+  "appetizer",
+  "main",
+  "side",
+  "dessert",
+  "drink",
+];
+
+const MENU_BY_CATEGORY: Partial<Record<Category, MenuItem[]>> = (() => {
+  const groups: Partial<Record<Category, MenuItem[]>> = {};
+  for (const item of SAMPLE_MENU) {
+    const list = groups[item.category];
+    if (list) list.push(item);
+    else groups[item.category] = [item];
+  }
+  return groups;
+})();
+
+// Hero (single-result) verdict styling — strong, audit-ready presence
+const VERDICT_HERO: Record<
   string,
   { bg: string; text: string; ring: string; label: string }
 > = {
@@ -71,38 +102,110 @@ const VERDICT_STYLE: Record<
     label: "CONTAINS",
   },
   "?": {
-    bg: "bg-slate-50",
-    text: "text-slate-900",
-    ring: "ring-slate-300",
+    bg: "bg-cream-soft",
+    text: "text-ink",
+    ring: "ring-line",
     label: "UNKNOWN — verify with kitchen",
   },
 };
 
-// Multi-order section: each cell carries its own color so a △ row inside a
-// card with an × never reads as "cannot serve". The card itself stays neutral
-// (white) and uses only a colored left border to flag the worst case.
+// Per-cell + per-card colours for the multi-order results
 const ORDER_CELL_BG: Record<string, string> = {
   "○": "bg-emerald-50",
   "△": "bg-amber-50",
   "×": "bg-rose-50",
-  "?": "bg-slate-50",
+  "?": "bg-cream-soft",
 };
 
 const ORDER_VERDICT_COLOR: Record<string, string> = {
   "○": "text-emerald-700",
   "△": "text-amber-700",
   "×": "text-rose-700",
-  "?": "text-slate-600",
+  "?": "text-ink-soft",
 };
 
 const ORDER_BORDER_COLOR: Record<string, string> = {
   "○": "border-l-emerald-500",
   "△": "border-l-amber-500",
   "×": "border-l-rose-600",
-  "?": "border-l-slate-300",
+  "?": "border-l-line",
 };
 
+function Pill({
+  selected,
+  onClick,
+  en,
+  ja,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  en: string;
+  ja: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        selected
+          ? "inline-flex items-center gap-2 rounded-full border-[1.5px] border-gold bg-gold px-4 py-2 text-sm font-semibold text-cream transition-all"
+          : "inline-flex items-center gap-2 rounded-full border-[1.5px] border-gold/30 bg-transparent px-4 py-2 text-sm font-medium text-ink transition-all hover:border-gold/60 hover:bg-gold-soft/50"
+      }
+    >
+      <span>{en}</span>
+      <span
+        className={
+          selected
+            ? "font-serif text-xs opacity-85"
+            : "font-serif text-xs opacity-55"
+        }
+      >
+        {ja}
+      </span>
+    </button>
+  );
+}
+
+function CategoryDivider({ en, ja }: { en: string; ja: string }) {
+  return (
+    <div className="mb-2.5 mt-1 flex items-center gap-3">
+      <span className="text-[10px] font-bold uppercase tracking-[2px] text-ink-soft">
+        {en}
+      </span>
+      <span className="font-serif text-[11px] text-ink-soft">{ja}</span>
+      <div className="h-px flex-1 bg-line" />
+    </div>
+  );
+}
+
+function SectionLabel({
+  ja,
+  en,
+  count,
+}: {
+  ja: string;
+  en: string;
+  count?: number;
+}) {
+  return (
+    <div className="mb-4 flex items-baseline justify-between">
+      <div>
+        <span className="font-serif text-lg font-semibold text-ink">{ja}</span>
+        <span className="ml-2.5 text-xs font-semibold uppercase tracking-[1px] text-ink-soft">
+          {en}
+        </span>
+      </div>
+      {count !== undefined && count > 0 && (
+        <span className="rounded-full bg-gold px-3 py-0.5 text-[11px] font-bold text-cream">
+          {count} selected
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function Home() {
+  // === Single voice/text query (Haiku-powered) ===
   const [transcript, setTranscript] = useState("");
   const [listening, setListening] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -189,7 +292,7 @@ export default function Home() {
     }
   };
 
-  const verdictStyle = result ? VERDICT_STYLE[result.verdict] : null;
+  const heroStyle = result ? VERDICT_HERO[result.verdict] : null;
 
   // === Multi-Order Safety Check (deterministic, no LLM call) ===
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
@@ -227,40 +330,45 @@ export default function Home() {
   );
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 px-4 py-10 text-slate-900">
-      <div className="mx-auto max-w-3xl space-y-8">
-        <header className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-            Portfolio 02 · Realtime Allergen Decision Support
+    <main className="min-h-screen bg-cream px-4 py-12 text-ink">
+      <div className="mx-auto max-w-3xl space-y-10">
+        {/* Header */}
+        <header className="space-y-3 text-center">
+          <p className="text-[11px] font-bold uppercase tracking-[3px] text-ink-soft">
+            Portfolio 02 · F&B × AI
           </p>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Service-floor allergen lookup
+          <h1 className="font-serif text-4xl font-bold leading-tight tracking-tight text-ink sm:text-5xl">
+            Service-floor
+            <br />
+            allergen lookup
           </h1>
-          <p className="text-slate-600">
+          <p className="mx-auto max-w-xl text-sm leading-relaxed text-ink-soft">
             Speak or type a question — &quot;Does the salmon teriyaki have
             shellfish?&quot; — and get a verified ○ / △ / × answer in under a
-            second. AI is used only to normalise intent; the verdict comes from
-            a deterministic Allergen Matrix lookup.
+            second. AI is used only to normalise intent; the verdict comes
+            from a deterministic Allergen Matrix lookup.
           </p>
         </header>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        {/* Single voice / text query */}
+        <section className="rounded-2xl border border-line bg-surface p-6 shadow-sm">
+          <SectionLabel ja="ひと言で確認" en="Quick Query" />
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <button
               type="button"
               onClick={listening ? stopListening : startListening}
               disabled={!speechSupported}
-              className={`flex h-16 w-16 items-center justify-center rounded-full text-2xl transition-all ${
+              className={
                 listening
-                  ? "animate-pulse bg-rose-500 text-white shadow-lg shadow-rose-200"
-                  : "bg-slate-900 text-white hover:bg-slate-700"
-              } disabled:cursor-not-allowed disabled:bg-slate-300`}
+                  ? "flex h-16 w-16 shrink-0 animate-pulse items-center justify-center rounded-full bg-rose-500 text-2xl text-white shadow-lg shadow-rose-200 transition-all"
+                  : "flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gold text-2xl text-cream shadow-sm transition-all hover:bg-gold-deep disabled:cursor-not-allowed disabled:bg-line"
+              }
               aria-label={listening ? "Stop listening" : "Start listening"}
             >
               {listening ? "■" : "🎙"}
             </button>
             <div className="flex-1">
-              <label className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+              <label className="text-[10px] font-bold uppercase tracking-[2px] text-ink-soft">
                 Transcript
               </label>
               <input
@@ -270,9 +378,9 @@ export default function Home() {
                 placeholder={
                   speechSupported
                     ? "Tap the mic, or type here…"
-                    : "Type your question here (mic not supported in this browser)"
+                    : "Type your question (mic not supported in this browser)"
                 }
-                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base shadow-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
+                className="mt-1 w-full rounded-lg border border-line bg-cream-soft/40 px-3 py-2.5 text-base text-ink placeholder:text-ink-soft focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") submitQuery();
                 }}
@@ -282,13 +390,13 @@ export default function Home() {
               type="button"
               onClick={submitQuery}
               disabled={loading || !transcript.trim()}
-              className="rounded-lg bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="rounded-lg bg-gold px-5 py-3 text-sm font-semibold text-cream shadow-sm transition hover:bg-gold-deep disabled:cursor-not-allowed disabled:bg-line disabled:text-ink-soft"
             >
               {loading ? "Checking…" : "Check"}
             </button>
           </div>
           {!speechSupported && (
-            <p className="mt-3 text-xs text-slate-500">
+            <p className="mt-3 text-xs text-ink-soft">
               Web Speech API not available in this browser. Best on Chrome
               desktop.
             </p>
@@ -301,20 +409,21 @@ export default function Home() {
           </div>
         )}
 
-        {result && verdictStyle && (
+        {/* Single result */}
+        {result && heroStyle && (
           <section
-            className={`rounded-2xl border-2 p-6 shadow-sm ring-4 ${verdictStyle.bg} ${verdictStyle.text} ${verdictStyle.ring} border-current/20`}
+            className={`rounded-2xl border-2 p-6 shadow-sm ring-4 ${heroStyle.bg} ${heroStyle.text} ${heroStyle.ring} border-current/20`}
           >
             <div className="flex items-start gap-6">
               <div className="text-7xl font-bold leading-none">
                 {result.verdict}
               </div>
               <div className="flex-1 space-y-2">
-                <p className="text-xs font-bold uppercase tracking-widest opacity-70">
-                  {verdictStyle.label}
+                <p className="text-[11px] font-bold uppercase tracking-[2px] opacity-70">
+                  {heroStyle.label}
                 </p>
                 {result.matchedItem && (
-                  <p className="text-xl font-semibold">
+                  <p className="font-serif text-xl font-semibold">
                     {result.matchedItem.name.en}
                     <span className="ml-2 text-base opacity-70">
                       / {result.matchedItem.name.ja}
@@ -352,80 +461,80 @@ export default function Home() {
           </section>
         )}
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold">
-              Multi-Order Safety Check
+        {/* Multi-Order Safety Check — picker */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="font-serif text-2xl font-bold text-ink">
+              注文 まるごと判定
             </h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Build a guest&apos;s order, select their allergies, get every
-              dish&apos;s verdict at once. No AI call — pure table lookup,
-              instant.
+            <p className="mt-1 text-xs uppercase tracking-[2px] text-ink-soft">
+              Multi-Order Safety Check
+            </p>
+            <p className="mt-2 text-sm text-ink-soft">
+              ゲストの注文と全アレルギーを一度にチェック。AI は使わず、テーブルルックアップのみ・即時応答。
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <fieldset className="rounded-lg border border-slate-200 p-4">
-              <legend className="px-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Order ({selectedItemIds.length})
-              </legend>
-              <div className="max-h-64 space-y-1 overflow-y-auto">
-                {SAMPLE_MENU.map((item) => (
-                  <label
-                    key={item.id}
-                    className="flex cursor-pointer items-start gap-2 rounded p-1 hover:bg-slate-50"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedItemIds.includes(item.id)}
-                      onChange={() => toggleItem(item.id)}
-                      className="mt-1 accent-slate-900"
-                    />
-                    <span className="text-sm leading-tight">
-                      {item.name.en}
-                      <span className="ml-1 text-xs text-slate-500">
-                        / {item.name.ja}
-                      </span>
-                    </span>
-                  </label>
-                ))}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-[7fr_3fr]">
+            {/* Order card */}
+            <div className="rounded-2xl border border-line bg-surface p-6 shadow-sm">
+              <SectionLabel
+                ja="お品書き"
+                en="Order"
+                count={selectedItemIds.length}
+              />
+              <div className="space-y-4">
+                {CATEGORY_ORDER.filter((c) => MENU_BY_CATEGORY[c]).map(
+                  (cat) => (
+                    <div key={cat}>
+                      <CategoryDivider
+                        en={CATEGORY_LABEL[cat].en}
+                        ja={CATEGORY_LABEL[cat].ja}
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        {(MENU_BY_CATEGORY[cat] ?? []).map((item) => (
+                          <Pill
+                            key={item.id}
+                            selected={selectedItemIds.includes(item.id)}
+                            onClick={() => toggleItem(item.id)}
+                            en={item.name.en}
+                            ja={item.name.ja}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ),
+                )}
               </div>
-            </fieldset>
+            </div>
 
-            <fieldset className="rounded-lg border border-slate-200 p-4">
-              <legend className="px-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Allergies ({selectedAllergens.length})
-              </legend>
-              <div className="grid grid-cols-2 gap-1">
+            {/* Allergies card */}
+            <div className="rounded-2xl border border-line bg-surface p-6 shadow-sm">
+              <SectionLabel
+                ja="アレルギー"
+                en="Allergies"
+                count={selectedAllergens.length}
+              />
+              <div className="flex flex-wrap gap-2">
                 {ALLERGEN_KEYS.map((a) => (
-                  <label
+                  <Pill
                     key={a}
-                    className="flex cursor-pointer items-center gap-2 rounded p-1 hover:bg-slate-50"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedAllergens.includes(a)}
-                      onChange={() => toggleAllergen(a)}
-                      className="accent-slate-900"
-                    />
-                    <span className="text-sm capitalize">
-                      {ALLERGEN_LABEL[a].en}
-                      <span className="ml-1 text-xs text-slate-500">
-                        / {ALLERGEN_LABEL[a].ja}
-                      </span>
-                    </span>
-                  </label>
+                    selected={selectedAllergens.includes(a)}
+                    onClick={() => toggleAllergen(a)}
+                    en={ALLERGEN_LABEL[a].en}
+                    ja={ALLERGEN_LABEL[a].ja}
+                  />
                 ))}
               </div>
-            </fieldset>
+            </div>
           </div>
 
-          <div className="mt-4 flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <button
               type="button"
               onClick={runOrderCheck}
               disabled={!orderReady}
-              className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="rounded-lg bg-ink px-6 py-3 text-sm font-semibold text-cream shadow-sm transition hover:bg-ink/85 disabled:cursor-not-allowed disabled:bg-line disabled:text-ink-soft"
             >
               Check Order Safety
             </button>
@@ -435,7 +544,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={clearOrder}
-                className="text-xs text-slate-500 underline hover:text-slate-900"
+                className="text-xs text-ink-soft underline transition hover:text-ink"
               >
                 Clear
               </button>
@@ -443,52 +552,54 @@ export default function Home() {
           </div>
 
           {orderResult && (
-            <div className="mt-6 space-y-4">
-              <div className="grid grid-cols-3 gap-2 rounded-lg bg-slate-50 p-4 text-center">
+            <div className="space-y-4 pt-2">
+              {/* Summary */}
+              <div className="grid grid-cols-3 gap-3 rounded-2xl border border-line bg-cream-soft/60 p-5 text-center">
                 <div>
-                  <div className="text-3xl font-bold text-emerald-600">
+                  <div className="text-3xl font-bold text-emerald-700">
                     {orderResult.summary.safeCount}
                   </div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  <div className="mt-1 text-[10px] font-bold uppercase tracking-[2px] text-ink-soft">
                     SAFE ○
                   </div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-amber-600">
+                  <div className="text-3xl font-bold text-amber-700">
                     {orderResult.summary.traceCount}
                   </div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  <div className="mt-1 text-[10px] font-bold uppercase tracking-[2px] text-ink-soft">
                     TRACE △
                   </div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-rose-600">
+                  <div className="text-3xl font-bold text-rose-700">
                     {orderResult.summary.containsCount}
                   </div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  <div className="mt-1 text-[10px] font-bold uppercase tracking-[2px] text-ink-soft">
                     CONTAINS ×
                   </div>
                 </div>
               </div>
 
+              {/* Per-item cards */}
               {orderResult.items.map(({ item, cells, worstVerdict }) => {
-                const worstLabel = VERDICT_STYLE[worstVerdict].label;
+                const worstLabel = VERDICT_HERO[worstVerdict].label;
                 return (
                   <div
                     key={item.id}
-                    className={`rounded-lg border-l-4 bg-white p-4 shadow-sm ${ORDER_BORDER_COLOR[worstVerdict]}`}
+                    className={`rounded-xl border-l-4 border-y border-r border-line bg-surface p-5 shadow-sm ${ORDER_BORDER_COLOR[worstVerdict]}`}
                   >
-                    <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2">
-                      <h3 className="font-semibold text-slate-900">
+                    <div className="mb-3 flex items-center justify-between border-b border-line pb-2.5">
+                      <h3 className="font-serif text-base font-semibold text-ink">
                         {item.name.en}
-                        <span className="ml-2 text-sm font-normal text-slate-500">
+                        <span className="ml-2 text-sm font-normal text-ink-soft">
                           / {item.name.ja}
                         </span>
                       </h3>
                       <div
                         className={`flex items-center gap-2 ${ORDER_VERDICT_COLOR[worstVerdict]}`}
                       >
-                        <span className="text-[10px] font-bold uppercase tracking-wider">
+                        <span className="text-[10px] font-bold uppercase tracking-[1px]">
                           {worstLabel}
                         </span>
                         <span className="text-3xl font-bold leading-none">
@@ -500,7 +611,7 @@ export default function Home() {
                       {cells.map((c) => (
                         <div
                           key={c.allergen}
-                          className={`rounded p-2 text-sm ${ORDER_CELL_BG[c.verdict]}`}
+                          className={`rounded-lg p-2.5 text-sm ${ORDER_CELL_BG[c.verdict]}`}
                         >
                           <div className="flex items-center gap-2">
                             <span
@@ -508,17 +619,17 @@ export default function Home() {
                             >
                               {c.verdict}
                             </span>
-                            <span className="font-medium capitalize text-slate-900">
+                            <span className="font-medium capitalize text-ink">
                               {ALLERGEN_LABEL[c.allergen].en}
                             </span>
-                            <span className="text-xs text-slate-500">
+                            <span className="font-serif text-xs text-ink-soft">
                               / {ALLERGEN_LABEL[c.allergen].ja}
                             </span>
                           </div>
                           {c.note && (
-                            <div className="mt-1 ml-7 space-y-0.5 text-xs text-slate-700">
-                              <p>{c.note.en}</p>
-                              <p className="text-slate-500">{c.note.ja}</p>
+                            <div className="ml-7 mt-1 space-y-0.5 text-xs">
+                              <p className="text-ink">{c.note.en}</p>
+                              <p className="text-ink-soft">{c.note.ja}</p>
                             </div>
                           )}
                         </div>
@@ -531,19 +642,25 @@ export default function Home() {
           )}
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold">
-            Sample Allergen Matrix · {SAMPLE_MENU.length} items
-          </h2>
+        {/* Sample matrix table */}
+        <section className="rounded-2xl border border-line bg-surface p-6 shadow-sm">
+          <div className="mb-4">
+            <h2 className="font-serif text-xl font-bold text-ink">
+              アレルゲン マトリクス
+            </h2>
+            <p className="mt-1 text-xs uppercase tracking-[2px] text-ink-soft">
+              Sample Matrix · {SAMPLE_MENU.length} items
+            </p>
+          </div>
           <div className="overflow-x-auto">
             <table className="min-w-full border-collapse text-sm">
               <thead>
-                <tr className="bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-600">
-                  <th className="px-3 py-2 font-semibold">Item</th>
+                <tr className="bg-cream-soft text-left text-[10px] uppercase tracking-[1px] text-ink-soft">
+                  <th className="px-3 py-2.5 font-bold">Item</th>
                   {ALLERGEN_KEYS.map((k) => (
                     <th
                       key={k}
-                      className="px-2 py-2 text-center font-semibold"
+                      className="px-2 py-2.5 text-center font-bold"
                       title={ALLERGEN_LABEL[k].ja}
                     >
                       {ALLERGEN_LABEL[k].en}
@@ -551,18 +668,20 @@ export default function Home() {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-line">
                 {SAMPLE_MENU.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50">
-                    <td className="px-3 py-2">
-                      <div className="font-medium">{item.name.en}</div>
-                      <div className="text-xs text-slate-500">
+                  <tr key={item.id} className="hover:bg-cream-soft/40">
+                    <td className="px-3 py-2.5">
+                      <div className="font-medium text-ink">
+                        {item.name.en}
+                      </div>
+                      <div className="font-serif text-xs text-ink-soft">
                         {item.name.ja}
                       </div>
                     </td>
                     {ALLERGEN_KEYS.map((k) => {
                       const level = item.contains[k];
-                      const symbol =
+                      const symbol: Verdict =
                         level === "yes"
                           ? "×"
                           : level === "trace"
@@ -577,7 +696,7 @@ export default function Home() {
                       return (
                         <td
                           key={k}
-                          className={`px-2 py-2 text-center font-bold ${color}`}
+                          className={`px-2 py-2.5 text-center font-bold ${color}`}
                         >
                           {symbol}
                         </td>
@@ -590,15 +709,34 @@ export default function Home() {
           </div>
         </section>
 
-        <footer className="pb-6 text-center text-xs text-slate-500">
-          Portfolio 02 · Realtime Allergen Decision Support · Next.js 16 +
-          Claude Haiku 4.5 + Sheets-shaped knowledge base ·{" "}
-          <a
-            href="https://github.com/risicare-jp/portfolio-02-realtime-allergen"
-            className="underline"
-          >
-            GitHub
-          </a>
+        {/* Footer */}
+        <footer className="space-y-2 pb-6 text-center text-xs text-ink-soft">
+          <p>
+            Portfolio 02 · Realtime Allergen Decision Support · Next.js 16 +
+            Claude Haiku 4.5
+          </p>
+          <p>
+            <a
+              href="https://github.com/risicare-jp/portfolio-02-realtime-allergen"
+              className="underline transition hover:text-gold"
+            >
+              GitHub
+            </a>
+            <span className="mx-2">·</span>
+            <a
+              href="/preview"
+              className="underline transition hover:text-gold"
+            >
+              色味プレビュー
+            </a>
+            <span className="mx-2">·</span>
+            <a
+              href="/preview/picker"
+              className="underline transition hover:text-gold"
+            >
+              ピッカー比較
+            </a>
+          </p>
         </footer>
       </div>
     </main>
