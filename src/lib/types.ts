@@ -55,3 +55,25 @@ export interface QueryResult {
   note: LocalisedText | null;
   rawTranscript: string;
 }
+
+export interface OrderCellResult {
+  allergen: AllergenKey;
+  verdict: Verdict;
+  note: LocalisedText | null;
+}
+
+export interface OrderItemResult {
+  item: MenuItem;
+  cells: OrderCellResult[];
+  /** The worst verdict across all selected allergens for this item. */
+  worstVerdict: Verdict;
+}
+
+export interface OrderCheckResult {
+  items: OrderItemResult[];
+  summary: {
+    safeCount: number;
+    traceCount: number;
+    containsCount: number;
+  };
+}

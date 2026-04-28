@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SAMPLE_MENU } from "@/data/sample-matrix";
+import { checkOrder } from "@/lib/lookup";
 import {
   ALLERGEN_KEYS,
   type AllergenKey,
+  type OrderCheckResult,
   type QueryResult,
 } from "@/lib/types";
 
@@ -165,6 +167,41 @@ export default function Home() {
 
   const verdictStyle = result ? VERDICT_STYLE[result.verdict] : null;
 
+  // === Multi-Order Safety Check (deterministic, no LLM call) ===
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
+  const [selectedAllergens, setSelectedAllergens] = useState<AllergenKey[]>([]);
+  const [orderResult, setOrderResult] = useState<OrderCheckResult | null>(null);
+
+  const toggleItem = (id: string) => {
+    setSelectedItemIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+    setOrderResult(null);
+  };
+
+  const toggleAllergen = (a: AllergenKey) => {
+    setSelectedAllergens((prev) =>
+      prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a],
+    );
+    setOrderResult(null);
+  };
+
+  const runOrderCheck = () => {
+    if (selectedItemIds.length === 0 || selectedAllergens.length === 0) return;
+    setOrderResult(checkOrder(selectedItemIds, selectedAllergens));
+  };
+
+  const clearOrder = () => {
+    setSelectedItemIds([]);
+    setSelectedAllergens([]);
+    setOrderResult(null);
+  };
+
+  const orderReady = useMemo(
+    () => selectedItemIds.length > 0 && selectedAllergens.length > 0,
+    [selectedItemIds, selectedAllergens],
+  );
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 px-4 py-10 text-slate-900">
       <div className="mx-auto max-w-3xl space-y-8">
@@ -290,6 +327,182 @@ export default function Home() {
             </details>
           </section>
         )}
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">
+              Multi-Order Safety Check
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Build a guest&apos;s order, select their allergies, get every
+              dish&apos;s verdict at once. No AI call — pure table lookup,
+              instant.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <fieldset className="rounded-lg border border-slate-200 p-4">
+              <legend className="px-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Order ({selectedItemIds.length})
+              </legend>
+              <div className="max-h-64 space-y-1 overflow-y-auto">
+                {SAMPLE_MENU.map((item) => (
+                  <label
+                    key={item.id}
+                    className="flex cursor-pointer items-start gap-2 rounded p-1 hover:bg-slate-50"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedItemIds.includes(item.id)}
+                      onChange={() => toggleItem(item.id)}
+                      className="mt-1 accent-slate-900"
+                    />
+                    <span className="text-sm leading-tight">
+                      {item.name.en}
+                      <span className="ml-1 text-xs text-slate-500">
+                        / {item.name.ja}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset className="rounded-lg border border-slate-200 p-4">
+              <legend className="px-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Allergies ({selectedAllergens.length})
+              </legend>
+              <div className="grid grid-cols-2 gap-1">
+                {ALLERGEN_KEYS.map((a) => (
+                  <label
+                    key={a}
+                    className="flex cursor-pointer items-center gap-2 rounded p-1 hover:bg-slate-50"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedAllergens.includes(a)}
+                      onChange={() => toggleAllergen(a)}
+                      className="accent-slate-900"
+                    />
+                    <span className="text-sm capitalize">
+                      {ALLERGEN_LABEL[a].en}
+                      <span className="ml-1 text-xs text-slate-500">
+                        / {ALLERGEN_LABEL[a].ja}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          </div>
+
+          <div className="mt-4 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={runOrderCheck}
+              disabled={!orderReady}
+              className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            >
+              Check Order Safety
+            </button>
+            {(selectedItemIds.length > 0 ||
+              selectedAllergens.length > 0 ||
+              orderResult) && (
+              <button
+                type="button"
+                onClick={clearOrder}
+                className="text-xs text-slate-500 underline hover:text-slate-900"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          {orderResult && (
+            <div className="mt-6 space-y-4">
+              <div className="grid grid-cols-3 gap-2 rounded-lg bg-slate-50 p-4 text-center">
+                <div>
+                  <div className="text-3xl font-bold text-emerald-600">
+                    {orderResult.summary.safeCount}
+                  </div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    SAFE ○
+                  </div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold text-amber-600">
+                    {orderResult.summary.traceCount}
+                  </div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    TRACE △
+                  </div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold text-rose-600">
+                    {orderResult.summary.containsCount}
+                  </div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    CONTAINS ×
+                  </div>
+                </div>
+              </div>
+
+              {orderResult.items.map(({ item, cells, worstVerdict }) => {
+                const style = VERDICT_STYLE[worstVerdict];
+                return (
+                  <div
+                    key={item.id}
+                    className={`rounded-lg border-l-4 p-4 ${style.bg} ${style.text}`}
+                    style={{ borderLeftColor: "currentColor" }}
+                  >
+                    <div className="mb-3 flex items-center justify-between">
+                      <h3 className="font-semibold">
+                        {item.name.en}
+                        <span className="ml-2 text-sm opacity-70">
+                          / {item.name.ja}
+                        </span>
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">
+                          {style.label}
+                        </span>
+                        <span className="text-3xl font-bold leading-none">
+                          {worstVerdict}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {cells.map((c) => (
+                        <div
+                          key={c.allergen}
+                          className="rounded bg-white/60 p-2 text-sm"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="inline-block w-5 text-center text-lg font-bold">
+                              {c.verdict}
+                            </span>
+                            <span className="font-medium capitalize">
+                              {ALLERGEN_LABEL[c.allergen].en}
+                            </span>
+                            <span className="text-xs opacity-60">
+                              / {ALLERGEN_LABEL[c.allergen].ja}
+                            </span>
+                          </div>
+                          {c.note && (
+                            <div className="mt-1 ml-7 space-y-0.5 text-xs">
+                              <p>{c.note.en}</p>
+                              <p className="opacity-70">{c.note.ja}</p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold">

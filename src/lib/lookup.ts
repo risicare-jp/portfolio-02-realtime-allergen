@@ -4,6 +4,8 @@ import type {
   ContainmentLevel,
   MenuItem,
   NormalisedIntent,
+  OrderCheckResult,
+  OrderItemResult,
   QueryResult,
   Verdict,
 } from "@/lib/types";
@@ -32,11 +34,66 @@ const ALLERGEN_LABEL_EN: Record<AllergenKey, string> = {
   sesame: "sesame",
 };
 
-function levelToVerdict(level: ContainmentLevel | undefined): Verdict {
+export function levelToVerdict(level: ContainmentLevel | undefined): Verdict {
   if (level === "yes") return "×";
   if (level === "trace") return "△";
   if (level === "no") return "○";
   return "○"; // not listed = does not contain
+}
+
+const VERDICT_RANK: Record<Verdict, number> = {
+  "○": 0,
+  "△": 1,
+  "×": 2,
+  "?": -1,
+};
+
+/**
+ * Multi-order safety check. For each ordered item, evaluate every selected
+ * allergen and return the per-cell verdict + note plus a worst-case summary.
+ * No LLM call — explicit selection is a deterministic table lookup.
+ */
+export function checkOrder(
+  itemIds: string[],
+  allergens: AllergenKey[],
+  menu: MenuItem[] = SAMPLE_MENU,
+): OrderCheckResult {
+  const items: OrderItemResult[] = itemIds
+    .map((id) => menu.find((m) => m.id === id))
+    .filter((m): m is MenuItem => Boolean(m))
+    .map((item) => {
+      const cells = allergens.map((allergen) => {
+        const verdict = levelToVerdict(item.contains[allergen]);
+        const note =
+          verdict === "×" || verdict === "△"
+            ? (item.notes?.[allergen] ?? null)
+            : null;
+        return { allergen, verdict, note };
+      });
+      const worstRank = cells.reduce(
+        (max, c) => Math.max(max, VERDICT_RANK[c.verdict]),
+        VERDICT_RANK["○"],
+      );
+      const worstVerdict: Verdict =
+        worstRank === VERDICT_RANK["×"]
+          ? "×"
+          : worstRank === VERDICT_RANK["△"]
+            ? "△"
+            : "○";
+      return { item, cells, worstVerdict };
+    });
+
+  const summary = items.reduce(
+    (acc, r) => {
+      if (r.worstVerdict === "○") acc.safeCount += 1;
+      else if (r.worstVerdict === "△") acc.traceCount += 1;
+      else if (r.worstVerdict === "×") acc.containsCount += 1;
+      return acc;
+    },
+    { safeCount: 0, traceCount: 0, containsCount: 0 },
+  );
+
+  return { items, summary };
 }
 
 function fuzzyMatchItem(query: string, menu: MenuItem[]): MenuItem | null {
