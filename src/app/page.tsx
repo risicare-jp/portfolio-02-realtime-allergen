@@ -589,7 +589,7 @@ export default function Home() {
                     key={item.id}
                     className={`rounded-xl border-l-4 border-y border-r border-line bg-surface p-5 shadow-sm ${ORDER_BORDER_COLOR[worstVerdict]}`}
                   >
-                    <div className="mb-3 flex items-center justify-between border-b border-line pb-2.5">
+                    <div className="mb-3 flex flex-col gap-2 border-b border-line pb-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                       <h3 className="font-serif text-base font-semibold text-ink">
                         {item.name.en}
                         <span className="ml-2 text-sm font-normal text-ink-soft">
@@ -597,7 +597,7 @@ export default function Home() {
                         </span>
                       </h3>
                       <div
-                        className={`flex items-center gap-2 ${ORDER_VERDICT_COLOR[worstVerdict]}`}
+                        className={`flex shrink-0 items-center gap-2 ${ORDER_VERDICT_COLOR[worstVerdict]}`}
                       >
                         <span className="text-[10px] font-bold uppercase tracking-[1px]">
                           {worstLabel}
