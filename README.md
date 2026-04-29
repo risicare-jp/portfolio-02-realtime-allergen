@@ -3,7 +3,7 @@
 **A service-floor web app where a server speaks "does this dish have shellfish?" and gets a verified ○ / △ / × answer in under one second — at SaaS-economical AI cost.**
 
 - **Live demo:** https://portfolio-02-realtime-allergen.vercel.app/
-- **Demo video (90 seconds):** *(coming soon)*
+- **Demo video (90 seconds):** [Loom](https://www.loom.com/share/5d717e7f56394d5fb6e7596172726e6a)
 - **Source code:** https://github.com/risicare-jp/portfolio-02-realtime-allergen
 
 > **Status**: Live (deployed 2026-04-28). End-to-end voice → answer running in production on Vercel.
@@ -71,7 +71,7 @@ Building both makes the differentiation concrete: **we know where AI belongs and
 - [x] End-to-end voice → answer round-trip working in production
 - [x] Multi-order safety check (orders × allergies grid)
 - [x] Production deployment on Vercel
-- [ ] Loom recording for the Upwork portfolio entry
+- [x] Loom recording for the Upwork portfolio entry
 
 ## Future work (parked, not abandoned)
 
