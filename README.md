@@ -2,7 +2,23 @@
 
 **A service-floor web app where a server speaks "does this dish have shellfish?" and gets a verified ○ / △ / × answer in under one second — at SaaS-economical AI cost.**
 
-> **Status**: In active development (kickoff 2026-04-28). Day-1 scope is end-to-end voice → answer in a single demo path.
+- **Live demo:** https://portfolio-02-realtime-allergen.vercel.app/
+- **Demo video (90 seconds):** *(coming soon)*
+- **Source code:** https://github.com/risicare-jp/portfolio-02-realtime-allergen
+
+> **Status**: Live (deployed 2026-04-28). End-to-end voice → answer running in production on Vercel.
+
+---
+
+## See it in action
+
+![Quick query verdict — "Does the ebi tempura have wheat?" returns × CONTAINS with a wheat-batter rationale, in both English and Japanese.](screenshots/01-quick-query-hero.png)
+
+A typed or spoken question returns a verdict in under a second. The only AI call is intent normalisation; the verdict comes from a deterministic Allergen Matrix lookup.
+
+![Multi-order safety check — three orders cross-referenced against three flagged allergies, returning × / △ / ○ for every cell, with rationale per dish.](screenshots/02-multi-order-grid.png)
+
+For full-order checks, every dish is cross-referenced against every flagged allergy at once. No AI is involved in this path — it is pure Matrix lookup, so latency is sub-100ms and cost is zero.
 
 ---
 
@@ -47,15 +63,17 @@ Building both makes the differentiation concrete: **we know where AI belongs and
 - **Knowledge base**: Google Sheets API (same matrix shape as Portfolio 1)
 - **Hosting target**: Vercel (PWA-friendly mobile delivery)
 
-## Day-1 scope (MVP)
+## Shipped (MVP)
 
 - [x] Next.js + TypeScript + Tailwind project scaffold
-- [ ] Google Sheets API integration — fetch the Allergen Matrix
-- [ ] Claude Haiku intent normalisation — minimal prompt, prompt-cached system block
-- [ ] End-to-end voice → answer round-trip in a single demo flow
+- [x] Allergen Matrix integration — fetch and render
+- [x] Claude Haiku intent normalisation — minimal prompt, prompt-cached system block
+- [x] End-to-end voice → answer round-trip working in production
+- [x] Multi-order safety check (orders × allergies grid)
+- [x] Production deployment on Vercel
 - [ ] Loom recording for the Upwork portfolio entry
 
-Out of scope for the MVP (parked, not abandoned):
+## Future work (parked, not abandoned)
 
 - Offline mode (IndexedDB-cached matrix, PWA service worker)
 - Multi-language voice input (Japanese / mixed JP-EN queries)
