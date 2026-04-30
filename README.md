@@ -2,6 +2,7 @@
 
 **A service-floor web app where a server speaks "does this dish have shellfish?" and gets a verified ○ / △ / × answer in under one second — at SaaS-economical AI cost.**
 
+- **Public case study:** [Notion](https://leeward-yard-638.notion.site/Real-time-Allergen-Decision-Support-Portfolio-Case-Study-35106134495680478174c28f9d28160f)
 - **Live demo:** https://portfolio-02-realtime-allergen.vercel.app/
 - **Demo video (90 seconds):** [Loom](https://www.loom.com/share/5d717e7f56394d5fb6e7596172726e6a)
 - **Source code:** https://github.com/risicare-jp/portfolio-02-realtime-allergen
